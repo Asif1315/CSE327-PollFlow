@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PollFlow - Modern Polling System</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" th:href="${isLoggedIn == true} ? '/polls' : '/'">
+                <i class="bi bi-lightning-charge-fill"></i> PollFlow
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" th:href="${isLoggedIn == true} ? '/polls' : '/'">Home</a>
+                <a class="nav-link" href="/polls">Polls</a>
+                <div th:if="${isLoggedIn == true}">
+                    <div class="nav-item-wrapper">
+                        <button class="notification-btn" onclick="showNotifications()">
+                            <i class="bi bi-bell"></i>
+                            <span th:if="${unreadCount > 0}" class="notification-badge" th:text="${unreadCount}">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="mark-all-btn" onclick="markAllAsRead()">Mark all as read</button>
+                            </div>
+                            <div id="notificationList" class="notification-list">
+                                <div class="notification-empty">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="nav-item-wrapper">
+                        <button class="profile-dropdown-btn">
+                            <i class="bi bi-person-circle"></i>
+                        </button>
+                        <div class="profile-dropdown">
+                            <div class="profile-dropdown-header">
+                                <i class="bi bi-person-circle" style="font-size: 2rem; color: #3b82f6;"></i>
+                                <div>
+                                    <div class="profile-name" th:text="${user?.fullName}">User</div>
+                                    <div class="profile-email" th:text="${user?.email}">email@example.com</div>
+                                </div>
+                            </div>
+                            <a href="/favourites" class="profile-dropdown-item">
+                                <i class="bi bi-heart"></i> Favourites
+                            </a>
+                            <a href="/profile" class="profile-dropdown-item">
+                                <i class="bi bi-person"></i> Profile
+                            </a>
+                            <a href="/profile" class="profile-dropdown-item">
+                                <i class="bi bi-pencil"></i> Edit Profile
+                            </a>
+                            <div class="profile-dropdown-divider"></div>
+                            <a href="/logout" class="profile-dropdown-item logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${isLoggedIn != true}">
+                    <a class="btn btn-primary" href="/login">Login</a>
+                    <a class="btn btn-secondary" href="/register">Register</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+            <span class="badge animate-fadeIn">✨ The Future of Voting</span>
+            <h1 class="hero-title animate-fadeIn animate-delay-1">Your Voice<br><span class="text-gradient">Matters Here</span></h1>
+            <p class="hero-subtitle animate-fadeIn animate-delay-2">Join thousands of participants in polls across various categories. Share opinions, see results, and make a difference.</p>
+            <div class="hero-actions animate-fadeIn animate-delay-3">
+                <a href="/polls" class="btn btn-lg btn-primary">
+                    <i class="bi bi-bar-chart-fill"></i> Explore Polls
+                </a>
+                <a href="/register" class="btn btn-lg btn-ghost">
+                    <i class="bi bi-person-plus-fill"></i> Join Now
+                </a>
+            </div>
+            <div class="hero-stats animate-fadeIn animate-delay-4">
+                <div class="stat-item">
+                    <span class="stat-number">10K+</span>
+                    <span class="stat-label">Active Polls</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">50K+</span>
+                    <span class="stat-label">Participants</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">100+</span>
+                    <span class="stat-label">Categories</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="badge">Why PollFlow</span>
+                <h2>Everything You Need</h2>
+            </div>
+            <div class="grid grid-3">
+                <div class="feature-card animate-fadeIn">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3>Secure Voting</h3>
+                    <p>Your votes are protected with enterprise-grade security and privacy measures.</p>
+                </div>
+                <div class="feature-card animate-fadeIn animate-delay-1">
+                    <div class="feature-icon accent">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                    <h3>Real-time Results</h3>
+                    <p>Watch results unfold in real-time with beautiful visualizations and analytics.</p>
+                </div>
+                <div class="feature-card animate-fadeIn animate-delay-2">
+                    <div class="feature-icon secondary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3>Community Driven</h3>
+                    <p>Join a vibrant community of engaged participants from around the world.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="categories">
+        <div class="container">
+            <div class="section-header">
+                <span class="badge">Browse</span>
+                <h2>Categories</h2>
+            </div>
+            <div class="grid grid-4">
+                <a href="/polls?category=1" class="category-card" style="--accent: #6366f1;">
+                    <div class="category-icon"><i class="bi bi-building"></i></div>
+                    <span class="category-name">Politics</span>
+                </a>
+                <a href="/polls?category=2" class="category-card" style="--accent: #10b981;">
+                    <div class="category-icon"><i class="bi bi-trophy"></i></div>
+                    <span class="category-name">Sports</span>
+                </a>
+                <a href="/polls?category=3" class="category-card" style="--accent: #f59e0b;">
+                    <div class="category-icon"><i class="bi bi-film"></i></div>
+                    <span class="category-name">Entertainment</span>
+                </a>
+                <a href="/polls?category=4" class="category-card" style="--accent: #06b6d4;">
+                    <div class="category-icon"><i class="bi bi-cpu"></i></div>
+                    <span class="category-name">Technology</span>
+                </a>
+                <a href="/polls?category=5" class="category-card" style="--accent: #ec4899;">
+                    <div class="category-icon"><i class="bi bi-briefcase"></i></div>
+                    <span class="category-name">Business</span>
+                </a>
+                <a href="/polls?category=6" class="category-card" style="--accent: #8b5cf6;">
+                    <div class="category-icon"><i class="bi bi-globe"></i></div>
+                    <span class="category-name">World News</span>
+                </a>
+                <a href="/polls?category=7" class="category-card" style="--accent: #14b8a6;">
+                    <div class="category-icon"><i class="bi bi-flag"></i></div>
+                    <span class="category-name">National</span>
+                </a>
+                <a href="/polls?category=8" class="category-card" style="--accent: #f97316;">
+                    <div class="category-icon"><i class="bi bi-flask"></i></div>
+                    <span class="category-name">Science</span>
+                </a>
+                <a href="/polls?category=9" class="category-card" style="--accent: #ef4444;">
+                    <div class="category-icon"><i class="bi bi-heart-pulse"></i></div>
+                    <span class="category-name">Health</span>
+                </a>
+                <a href="/polls?category=10" class="category-card" style="--accent: #22c55e;">
+                    <div class="category-icon"><i class="bi bi-tree"></i></div>
+                    <span class="category-name">Environment</span>
+                </a>
+                <a href="/polls?category=11" class="category-card" style="--accent: #3b82f6;">
+                    <div class="category-icon"><i class="bi bi-book"></i></div>
+                    <span class="category-name">Education</span>
+                </a>
+                <a href="/polls?category=12" class="category-card" style="--accent: #a855f7;">
+                    <div class="category-icon"><i class="bi bi-palette"></i></div>
+                    <span class="category-name">Lifestyle</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2>Ready to Make Your Voice Heard?</h2>
+                    <p>Join PollFlow today and start participating in polls that matter to you.</p>
+                    <a href="/register" class="btn btn-lg btn-primary">
+                        <i class="bi bi-rocket-takeoff"></i> Get Started
+                    </a>
+                </div>
+                <div class="cta-decoration">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="/">
+                        <i class="bi bi-lightning-charge-fill"></i> PollFlow
+                    </a>
+                    <p>Empowering voices through modern polling.</p>
+                </div>
+                <div class="footer-links">
+                    <h4>Quick Links</h4>
+                    <a href="/polls">All Polls</a>
+                    <a href="/login">Login</a>
+                    <a href="/register">Register</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 PollFlow. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 0;
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .navbar-brand i {
+            font-size: 1.75rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 0 4rem;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.1), transparent);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            color: var(--dark);
+            margin: 1.5rem 0;
+        }
+
+        .text-gradient {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+
+        .stat-divider {
+            width: 1px;
+            height: 40px;
+            background: var(--gray-300);
+        }
+
+        .hero-shapes {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.5;
+        }
+
+        .shape-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--primary);
+            top: -100px;
+            right: -100px;
+        }
+
+        .shape-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--secondary);
+            bottom: 0;
+            left: 20%;
+        }
+
+        .shape-3 {
+            width: 200px;
+            height: 200px;
+            background: var(--accent);
+            top: 40%;
+            right: 10%;
+        }
+
+        .features {
+            padding: 5rem 0;
+            background: var(--white);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-top: 0.5rem;
+        }
+
+        .feature-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+            transition: var(--transition);
+            border: 1px solid var(--gray-100);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: transparent;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: var(--radius-lg);
+            margin: 0 auto 1.5rem;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+
+        .feature-icon.accent {
+            background: var(--gradient-accent);
+        }
+
+        .feature-icon.secondary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--dark);
+        }
+
+        .feature-card p {
+            color: var(--text-light);
+            font-size: 0.9375rem;
+        }
+
+        .categories {
+            padding: 5rem 0;
+            background: var(--background);
+        }
+
+        .category-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.5rem;
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            transition: var(--transition);
+            border: 1px solid var(--gray-100);
+            gap: 1rem;
+        }
+
+        .category-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent);
+        }
+
+        .category-card:hover .category-icon {
+            transform: scale(1.1);
+            background: var(--accent);
+            color: var(--white);
+        }
+
+        .category-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            border-radius: var(--radius-lg);
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+
+        .cta {
+            padding: 5rem 0;
+        }
+
+        .cta-card {
+            background: var(--gradient-primary);
+            border-radius: var(--radius-xl);
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-content h2 {
+            color: var(--white);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .cta-content p {
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 1.5rem;
+            font-size: 1.125rem;
+        }
+
+        .cta-content .btn-primary {
+            background: var(--white);
+            color: var(--primary);
+        }
+
+        .cta-content .btn-primary:hover {
+            background: var(--gray-100);
+            transform: translateY(-2px);
+        }
+
+        .cta-decoration {
+            font-size: 8rem;
+            color: rgba(255, 255, 255, 0.15);
+            position: absolute;
+            right: 3rem;
+        }
+
+        .footer {
+            background: var(--dark);
+            padding: 4rem 0 2rem;
+            color: var(--gray-300);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand p {
+            color: var(--gray-400);
+            max-width: 300px;
+        }
+
+        .footer-links h4 {
+            color: var(--white);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--gray-700);
+            padding-top: 2rem;
+            text-align: center;
+            color: var(--gray-400);
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-stats {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .stat-divider {
+                display: none;
+            }
+            
+            .cta-card {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .cta-decoration {
+                display: none;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 2rem;
+            }
+        }
+        
+        .nav-item-wrapper { position: relative; display: inline-block; }
+        .notification-btn { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #374151; position: relative; padding: 0.5rem; }
+        .notification-btn:hover { color: #3b82f6; }
+        .notification-badge { position: absolute; top: 0; right: 0; background: #ef4444; color: white; font-size: 0.625rem; padding: 0.125rem 0.375rem; border-radius: 10px; min-width: 18px; text-align: center; }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; width: 320px; max-height: 400px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #f3f4f6; }
+        .notification-header h4 { margin: 0; font-size: 0.875rem; font-weight: 600; }
+        .mark-all-btn { background: none; border: none; color: #3b82f6; font-size: 0.75rem; cursor: pointer; }
+        .notification-list { max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+        .notification-item:hover { background: #f9fafb; }
+        .notification-item.unread { background: #dbeafe; }
+        .notification-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .notification-message { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .notification-time { font-size: 0.625rem; color: #9ca3af; }
+        .notification-empty { padding: 2rem; text-align: center; color: #9ca3af; font-size: 0.875rem; }
+        
+        .profile-dropdown-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151; padding: 0.25rem; display: flex; align-items: center; }
+        .profile-dropdown-btn:hover { color: #3b82f6; }
+        .profile-dropdown { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-bottom: 1px solid #f3f4f6; }
+        .profile-dropdown-header .profile-name { font-weight: 600; font-size: 0.875rem; }
+        .profile-dropdown-header .profile-email { font-size: 0.75rem; color: #6b7280; }
+        .profile-dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #374151; text-decoration: none; font-size: 0.875rem; }
+        .profile-dropdown-item:hover { background: #f9fafb; }
+        .profile-dropdown-item.logout { color: #ef4444; }
+        .profile-dropdown-divider { height: 1px; background: #f3f4f6; margin: 0.25rem 0; }
+    </style>
+    
+    <script th:if="${isLoggedIn == true}">
+        function showNotifications() {
+            var dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+            loadNotifications();
+        }
+        
+        function loadNotifications() {
+            var list = document.getElementById('notificationList');
+            fetch('/api/notifications/unread?page=0&size=10')
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var content = '';
+                if (data.content && data.content.length > 0) {
+                    data.content.forEach(function(n) {
+                        content += '<div class="notification-item' + (n.isRead ? '' : ' unread') + '" onclick="markAsRead(' + n.id + ')">' +
+                            '<div class="notification-title">' + n.title + '</div>' +
+                            '<div class="notification-message">' + n.message + '</div>' +
+                            '<div class="notification-time">' + new Date(n.createdAt).toLocaleString() + '</div>' +
+                            '</div>';
+                    });
+                } else {
+                    content = '<div class="notification-empty">No new notifications</div>';
+                }
+                list.innerHTML = content;
+            })
+            .catch(function() {
+                list.innerHTML = '<div class="notification-empty">No new notifications</div>';
+            });
+        }
+        
+        function markAsRead(id) {
+            fetch('/api/notifications/' + id + '/read', { method: 'PUT' })
+            .then(function() { location.reload(); });
+        }
+        
+        function markAllAsRead() {
+            fetch('/api/notifications/read-all', { method: 'PUT' })
+            .then(function() { location.reload(); });
+        }
+        
+        document.addEventListener('click', function(e) {
+            var notificationDropdown = document.getElementById('notificationDropdown');
+            var notificationWrapper = document.querySelector('.nav-item-wrapper:first-child');
+            if (notificationWrapper && !notificationWrapper.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+            }
+            
+            var profileDropdown = document.querySelector('.profile-dropdown');
+            var profileWrapper = document.querySelector('.nav-item-wrapper:nth-child(2)');
+            if (profileWrapper && !profileWrapper.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+        
+        document.querySelector('.profile-dropdown-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.profile-dropdown').classList.toggle('show');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Poll - PollFlow Admin</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        button { font-family: inherit; cursor: pointer; border: none; outline: none; transition: all 0.3s; }
+        input, textarea, select { font-family: inherit; outline: none; }
+
+        .admin-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--dark);
+            padding: 1rem 0;
+        }
+
+        .admin-navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .admin-brand i { color: var(--primary); font-size: 1.75rem; }
+        .admin-brand small { font-size: 0.875rem; font-weight: 400; color: #94a3b8; margin-left: 0.25rem; }
+
+        .admin-nav-links { display: flex; gap: 0.5rem; }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+        .nav-link.active { background: var(--primary); color: var(--white); }
+
+        .nav-item-wrapper { position: relative; display: inline-block; }
+        
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: 0.9375rem;
+            color: var(--white);
+        }
+
+        .profile-btn:hover { background: rgba(255,255,255,0.2); }
+        .profile-btn i:first-child { font-size: 1.25rem; }
+        .profile-btn i:last-child { font-size: 0.75rem; }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            width: 220px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+        }
+
+        .profile-dropdown.show { display: block; }
+        
+        .profile-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .profile-dropdown-header .profile-name { font-weight: 600; font-size: 0.875rem; }
+        .profile-dropdown-header .profile-email { font-size: 0.75rem; color: var(--text-light); }
+        
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .profile-dropdown-item:hover { background: var(--gray-50); }
+        .profile-dropdown-item.logout { color: var(--danger); }
+        .profile-dropdown-divider { height: 1px; background: var(--gray-100); margin: 0.25rem 0; }
+
+        .admin-container {
+            padding: 100px 2rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .page-header h1 i { color: var(--primary); }
+        
+        .page-header p {
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .create-form {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-title i { color: var(--primary); }
+
+        .form-group { margin-bottom: 1.25rem; }
+        
+        .form-group:last-child { margin-bottom: 0; }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .form-group label .required { color: var(--danger); }
+
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group input[type="time"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-group textarea { resize: vertical; min-height: 80px; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .poll-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .poll-type-option {
+            position: relative;
+        }
+
+        .poll-type-option input { display: none; }
+
+        .poll-type-option label {
+            display: block;
+            padding: 1.25rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .poll-type-option label:hover { border-color: var(--primary); }
+
+        .poll-type-option input:checked + label {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .poll-type-option label i {
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .poll-type-option input:checked + label i { color: var(--primary); }
+
+        .poll-type-option label span {
+            display: block;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .poll-type-option label small {
+            display: block;
+            color: var(--text-light);
+            font-size: 0.8125rem;
+            margin-top: 0.25rem;
+        }
+
+        .time-fields {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .time-fields.show { display: block; }
+
+        .time-fields .form-row { margin-bottom: 1rem; }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            transition: all 0.3s;
+        }
+
+        .checkbox-option:hover { border-color: var(--primary); }
+
+        .checkbox-option input { width: auto; margin: 0; }
+
+        .checkbox-option span { font-size: 0.9375rem; }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .option-number {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-100);
+            border-radius: 50%;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+
+        .option-input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+        }
+
+        .option-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .remove-option-btn {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0.5rem;
+            font-size: 1.25rem;
+            transition: all 0.3s;
+        }
+
+        .remove-option-btn:hover { color: var(--danger); }
+
+        .add-option-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: transparent;
+            border: 1px dashed var(--gray-300);
+            border-radius: var(--radius);
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+
+        .add-option-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            font-size: 0.9375rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover { background: var(--primary-dark); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-light);
+        }
+
+        .btn-ghost:hover { background: var(--gray-100); color: var(--text); }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 9999;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+
+        @media (max-width: 768px) {
+            .admin-navbar .container { flex-direction: column; gap: 1rem; }
+            .admin-nav-links { flex-wrap: wrap; justify-content: center; }
+            .form-row { grid-template-columns: 1fr; }
+            .poll-type-selector { grid-template-columns: 1fr; }
+            .admin-container { padding: 120px 1rem 1rem; }
+            .create-form { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-navbar">
+        <div class="container">
+            <a class="admin-brand" href="/admin">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>PollFlow <small>Admin</small></span>
+            </a>
+            <div class="admin-nav-links">
+                <a href="/admin" class="nav-link">
+                    <i class="bi bi-gear"></i> Dashboard
+                </a>
+                <a th:if="${currentUser.role == 'POLL_ADMIN'}" href="/admin/poll/create" class="nav-link active">
+                    <i class="bi bi-plus-circle"></i> Create Poll
+                </a>
+                <a href="/admin/analytics" class="nav-link">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a href="/admin/users" class="nav-link">
+                    <i class="bi bi-people"></i> Users
+                </a>
+            </div>
+            <div class="admin-actions">
+                <div class="nav-item-wrapper">
+                    <button class="profile-btn" onclick="toggleProfileDropdown()">
+                        <i class="bi bi-person-circle"></i>
+                        <span th:text="${currentUser.fullName}">Admin</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div id="profileDropdown" class="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <i class="bi bi-person-circle" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                            <div>
+                                <div class="profile-name" th:text="${currentUser.fullName}">Admin</div>
+                                <div class="profile-email" th:text="${currentUser.email}">admin@example.com</div>
+                            </div>
+                        </div>
+                        <a href="/admin/profile" class="profile-dropdown-item">
+                            <i class="bi bi-person"></i> See Profile
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="/logout" class="profile-dropdown-item logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-plus-circle"></i> Create New Poll
+            </h1>
+            <p>Fill in the details below to create a new poll</p>
+        </div>
+
+        <form id="createPollForm" class="create-form" onsubmit="createPoll(event)">
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-card-text"></i> Basic Information
+                </div>
+                
+                <div class="form-group">
+                    <label>Poll Title <span class="required">*</span></label>
+                    <input type="text" id="pollTitle" required placeholder="Enter your poll question">
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="pollDescription" rows="3" placeholder="Add more context to your poll (optional)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Category <span class="required">*</span></label>
+                    <select id="pollCategory" required>
+                        <option value="">Select a category</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Category</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-clock"></i> Poll Type
+                </div>
+                
+                <div class="poll-type-selector">
+                    <div class="poll-type-option">
+                        <input type="radio" name="pollType" id="pollTypeOpen" value="OPEN" checked onchange="toggleTimeFields()">
+                        <label for="pollTypeOpen">
+                            <i class="bi bi-globe"></i>
+                            <span>Open Poll</span>
+                            <small>Visible to everyone</small>
+                        </label>
+                    </div>
+                    <div class="poll-type-option">
+                        <input type="radio" name="pollType" id="pollTypeTime" value="TIME_BASED" onchange="toggleTimeFields()">
+                        <label for="pollTypeTime">
+                            <i class="bi bi-hourglass-split"></i>
+                            <span>Time Poll</span>
+                            <small>Ends at specific time</small>
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="timeFields" class="time-fields">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>End Date <span class="required">*</span></label>
+                            <input type="date" id="pollEndDate">
+                        </div>
+                        <div class="form-group">
+                            <label>End Time <span class="required">*</span></label>
+                            <input type="time" id="pollEndTime">
+                        </div>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="hideResultsUntilEnd">
+                        <span>Hide results until poll ends</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="bi bi-list-ol"></i> Poll Options
+                </div>
+                
+                <div class="options-container" id="optionsContainer">
+                    <div class="option-row">
+                        <span class="option-number">1</span>
+                        <input type="text" class="option-input" placeholder="Option 1" required>
+                        <button type="button" class="remove-option-btn" onclick="removeOption(this)" title="Remove option">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="option-row">
+                        <span class="option-number">2</span>
+                        <input type="text" class="option-input" placeholder="Option 2" required>
+                        <button type="button" class="remove-option-btn" onclick="removeOption(this)" title="Remove option">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="option-row">
+                        <span class="option-number">3</span>
+                        <input type="text" class="option-input" placeholder="Option 3">
+                        <button type="button" class="remove-option-btn" onclick="removeOption(this)" title="Remove option">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                    <div class="option-row">
+                        <span class="option-number">4</span>
+                        <input type="text" class="option-input" placeholder="Option 4">
+                        <button type="button" class="remove-option-btn" onclick="removeOption(this)" title="Remove option">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="button" class="add-option-btn" onclick="addOption()">
+                    <i class="bi bi-plus"></i> Add Option
+                </button>
+            </div>
+
+            <div class="form-actions">
+                <a href="/admin" class="btn btn-ghost">
+                    <i class="bi bi-x-lg"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> Create Poll
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="bi bi-check-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+        function getHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            } else {
+                headers[csrfHeader] = csrfToken;
+            }
+            return headers;
+        }
+
+        function toggleProfileDropdown() {
+            document.getElementById('profileDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            var profileBtn = document.querySelector('.profile-btn');
+            var profileDropdown = document.getElementById('profileDropdown');
+            if (profileBtn && !profileBtn.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        function toggleTimeFields() {
+            var pollType = document.querySelector('input[name="pollType"]:checked').value;
+            var timeFields = document.getElementById('timeFields');
+            timeFields.classList.toggle('show', pollType === 'TIME_BASED');
+        }
+
+        var optionCount = 4;
+        
+        function addOption() {
+            optionCount++;
+            var container = document.getElementById('optionsContainer');
+            var newRow = document.createElement('div');
+            newRow.className = 'option-row';
+            newRow.innerHTML = `
+                <span class="option-number">${optionCount}</span>
+                <input type="text" class="option-input" placeholder="Option ${optionCount}">
+                <button type="button" class="remove-option-btn" onclick="removeOption(this)">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+            container.appendChild(newRow);
+            updateOptionNumbers();
+        }
+
+        function removeOption(btn) {
+            var rows = document.querySelectorAll('.option-row');
+            if (rows.length > 2) {
+                btn.parentElement.remove();
+                updateOptionNumbers();
+            } else {
+                showToast('Minimum 2 options required', 'error');
+            }
+        }
+
+        function updateOptionNumbers() {
+            var rows = document.querySelectorAll('.option-row');
+            rows.forEach(function(row, index) {
+                var numSpan = row.querySelector('.option-number');
+                if (numSpan) {
+                    numSpan.textContent = index + 1;
+                }
+                var input = row.querySelector('.option-input');
+                if (input && !input.placeholder.includes(String(index + 1))) {
+                    input.placeholder = 'Option ' + (index + 1);
+                }
+                var removeBtn = row.querySelector('.remove-option-btn');
+                if (removeBtn) {
+                    removeBtn.style.display = rows.length <= 2 ? 'none' : 'block';
+                }
+            });
+            optionCount = rows.length;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOptionNumbers();
+        });
+
+        function createPoll(e) {
+            e.preventDefault();
+            
+            var title = document.getElementById('pollTitle').value;
+            var description = document.getElementById('pollDescription').value;
+            var categoryId = document.getElementById('pollCategory').value;
+            var pollType = document.querySelector('input[name="pollType"]:checked').value;
+            
+            var optionInputs = document.querySelectorAll('.option-input');
+            var options = [];
+            optionInputs.forEach(function(input) {
+                if (input.value.trim()) {
+                    options.push(input.value.trim());
+                }
+            });
+
+            if (options.length < 2) {
+                showToast('Please provide at least 2 options', 'error');
+                return;
+            }
+
+            if (!categoryId) {
+                showToast('Please select a category', 'error');
+                return;
+            }
+
+            var endTime = null;
+            var hideResults = false;
+            
+            if (pollType === 'TIME_BASED') {
+                var endDate = document.getElementById('pollEndDate').value;
+                var endTimeStr = document.getElementById('pollEndTime').value;
+                
+                if (!endDate || !endTimeStr) {
+                    showToast('Please select end date and time', 'error');
+                    return;
+                }
+                
+                endTime = endDate + 'T' + endTimeStr + ':00';
+                hideResults = document.getElementById('hideResultsUntilEnd').checked;
+            }
+
+            var payload = {
+                title: title,
+                description: description,
+                categoryId: parseInt(categoryId),
+                options: options,
+                pollType: pollType,
+                endTime: endTime,
+                hideResults: hideResults
+            };
+
+            fetch('/api/admin/polls', {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    return response.json().then(function(err) {
+                        throw new Error(err.message || 'Failed to create poll');
+                    });
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                showToast('Poll created successfully!', 'success');
+                setTimeout(function() {
+                    window.location.href = '/admin';
+                }, 1500);
+            })
+            .catch(function(err) {
+                showToast(err.message || 'Failed to create poll', 'error');
+            });
+        }
+
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            var toastMessage = document.getElementById('toastMessage');
+            var icon = toast.querySelector('i');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast toast-' + type;
+            
+            if (type === 'success') {
+                icon.className = 'bi bi-check-circle';
+            } else {
+                icon.className = 'bi bi-exclamation-circle';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

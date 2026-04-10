@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Users - PollFlow Admin</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --dark: #0f172a;
+            --text: #334155;
+            --text-light: #64748b;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        a { text-decoration: none; color: inherit; }
+        button { font-family: inherit; cursor: pointer; border: none; outline: none; transition: all 0.3s; }
+        input, select { font-family: inherit; outline: none; }
+
+        .admin-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: var(--dark);
+            padding: 1rem 0;
+        }
+
+        .admin-navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .admin-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .admin-brand i { color: var(--primary); font-size: 1.75rem; }
+        .admin-brand small { font-size: 0.875rem; font-weight: 400; color: #94a3b8; margin-left: 0.25rem; }
+
+        .admin-nav-links { display: flex; gap: 0.5rem; }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            font-size: 0.9375rem;
+            border-radius: var(--radius);
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+        .nav-link.active { background: var(--primary); color: var(--white); }
+
+        .nav-item-wrapper { position: relative; display: inline-block; }
+        
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: 0.9375rem;
+            color: var(--white);
+        }
+
+        .profile-btn:hover { background: rgba(255,255,255,0.2); }
+        .profile-btn i:first-child { font-size: 1.25rem; }
+        .profile-btn i:last-child { font-size: 0.75rem; }
+
+        .profile-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            width: 220px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+        }
+
+        .profile-dropdown.show { display: block; }
+        
+        .profile-dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .profile-dropdown-header .profile-name { font-weight: 600; font-size: 0.875rem; }
+        .profile-dropdown-header .profile-email { font-size: 0.75rem; color: var(--text-light); }
+        
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .profile-dropdown-item:hover { background: var(--gray-50); }
+        .profile-dropdown-item.logout { color: var(--danger); }
+        .profile-dropdown-divider { height: 1px; background: var(--gray-100); margin: 0.25rem 0; }
+
+        .admin-container {
+            padding: 100px 2rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .admin-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .admin-header h1 i { color: var(--primary); }
+        
+        .admin-header p {
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .header-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .header-badge.badge-primary { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+
+        .search-filter-section { display: none; }
+
+        .search-filter-wrapper { margin-bottom: 1.5rem; }
+        
+        .search-section {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box-large {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box-large i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .search-box-large input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            font-size: 1rem;
+            background: var(--white);
+        }
+
+        .search-box-large input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.5rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-toggle-btn i {
+            font-size: 1.125rem;
+        }
+
+        .filter-panel {
+            display: none;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+        }
+
+        .filter-panel.show {
+            display: block;
+        }
+
+        .filter-row-multi {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-col {
+            width: 100%;
+        }
+
+        .filter-col select {
+            width: 100%;
+            padding: 0.625rem 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+            background: var(--white);
+            cursor: pointer;
+        }
+
+        .filter-col select:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .city-filter-wrapper {
+            position: relative;
+        }
+
+        .city-search-wrapper {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 0.5rem;
+            z-index: 10;
+            box-shadow: var(--shadow);
+        }
+
+        .city-filter-wrapper:focus-within .city-search-wrapper {
+            display: block;
+        }
+
+        .city-search-wrapper input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+        }
+
+        .filter-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        .clear-filters-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-light);
+            font-size: 0.8125rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-filters-btn:hover {
+            color: var(--danger);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-lg);
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.primary { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .stat-info { display: flex; flex-direction: column; }
+        .stat-value { font-size: 1.75rem; font-weight: 700; color: var(--dark); }
+        .stat-label { font-size: 0.875rem; color: var(--text-light); }
+
+        .users-table-container {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .users-table th {
+            text-align: left;
+            padding: 1rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .users-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.9375rem;
+        }
+
+        .users-table tr:hover { background: var(--gray-50); }
+
+        .user-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-details h4 { font-size: 0.9375rem; font-weight: 600; color: var(--dark); }
+        .user-details p { font-size: 0.8125rem; color: var(--text-light); }
+
+        .status-badge {
+            display: inline-flex;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.active, .status-badge.approved { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .status-badge.pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .status-badge.rejected { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        .action-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            padding: 0.375rem 0.75rem;
+            border-radius: var(--radius);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-approve { background: var(--success); color: var(--white); }
+        .btn-approve:hover { background: #059669; }
+
+        .btn-reject { background: var(--danger); color: var(--white); }
+        .btn-reject:hover { background: #dc2626; }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-300);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-state p { color: var(--text-light); }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 9999;
+        }
+
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .admin-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .admin-nav-links { flex-wrap: wrap; justify-content: center; }
+            .admin-container { padding: 120px 1rem 1rem; }
+            .search-section { flex-direction: column; }
+            .filter-toggle-btn { justify-content: center; }
+            .filter-row-multi { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        @media (max-width: 480px) {
+            .filter-row-multi { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="admin-navbar">
+        <div class="container">
+            <a class="admin-brand" href="/admin">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>PollFlow <small>Admin</small></span>
+            </a>
+            <div class="admin-nav-links">
+                <a href="/admin" class="nav-link">
+                    <i class="bi bi-gear"></i> Dashboard
+                </a>
+                <a th:if="${currentUser.role == 'POLL_ADMIN'}" href="/admin/poll/create" class="nav-link">
+                    <i class="bi bi-plus-circle"></i> Create Poll
+                </a>
+                <a href="/admin/analytics" class="nav-link">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a href="/admin/users" class="nav-link active">
+                    <i class="bi bi-people"></i> Users
+                </a>
+            </div>
+            <div class="admin-actions">
+                <div class="nav-item-wrapper">
+                    <button class="profile-btn" onclick="toggleProfileDropdown()">
+                        <i class="bi bi-person-circle"></i>
+                        <span th:text="${currentUser.fullName}">Admin</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
+                    <div id="profileDropdown" class="profile-dropdown">
+                        <div class="profile-dropdown-header">
+                            <i class="bi bi-person-circle" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                            <div>
+                                <div class="profile-name" th:text="${currentUser.fullName}">Admin</div>
+                                <div class="profile-email" th:text="${currentUser.email}">admin@example.com</div>
+                            </div>
+                        </div>
+                        <a href="/admin/profile" class="profile-dropdown-item">
+                            <i class="bi bi-person"></i> See Profile
+                        </a>
+                        <div class="profile-dropdown-divider"></div>
+                        <a href="/logout" class="profile-dropdown-item logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="header-content">
+                <h1>
+                    <i class="bi bi-people"></i> User Management
+                </h1>
+                <p>Manage and verify user accounts</p>
+            </div>
+            <div class="header-badge" th:classappend="${currentUser.role == 'VERIFICATION_ADMIN'} ? 'badge-warning' : 'badge-primary'">
+                <span th:if="${currentUser.role == 'VERIFICATION_ADMIN'}">Verification Admin</span>
+                <span th:if="${currentUser.role == 'POLL_ADMIN'}">Poll Admin</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" th:text="${users.size()}">0</span>
+                    <span class="stat-label">Total Users</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" th:text="${users.?[status == 'APPROVED'].size()}">0</span>
+                    <span class="stat-label">Approved Users</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" th:text="${users.?[status == 'PENDING'].size()}">0</span>
+                    <span class="stat-label">Pending Users</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon danger">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+                <div class="stat-info">
+                    <span class="stat-value" th:text="${users.?[status == 'REJECTED'].size()}">0</span>
+                    <span class="stat-label">Rejected Users</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="search-filter-wrapper">
+            <div class="search-section">
+                <div class="search-box-large">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="userSearch" placeholder="Search users by name, email, region, city..." onkeyup="filterUsers()">
+                </div>
+                <button class="filter-toggle-btn" onclick="toggleFilterPanel()">
+                    <i class="bi bi-funnel"></i> Filters
+                </button>
+            </div>
+            <div class="filter-panel" id="filterPanel">
+                <div class="filter-row-multi">
+                    <div class="filter-col">
+                        <select id="roleFilter" onchange="filterUsers()">
+                            <option value="">All Roles</option>
+                            <option value="USER">User</option>
+                            <option value="VERIFICATION_ADMIN">Verification Admin</option>
+                            <option value="POLL_ADMIN">Poll Admin</option>
+                        </select>
+                    </div>
+                    <div class="filter-col">
+                        <select id="statusFilter" onchange="filterUsers()">
+                            <option value="">All Status</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="filter-col">
+                        <select id="genderFilter" onchange="filterUsers()">
+                            <option value="">All Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="filter-col">
+                        <select id="ageFilter" onchange="filterUsers()">
+                            <option value="">All Ages</option>
+                            <option value="18-25">18-25</option>
+                            <option value="26-35">26-35</option>
+                            <option value="36-45">36-45</option>
+                            <option value="46-55">46-55</option>
+                            <option value="55+">55+</option>
+                        </select>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-row-multi">
+                    <div class="filter-col">
+                        <select id="maritalStatusFilter" onchange="filterUsers()">
+                            <option value="">All Marital Status</option>
+                            <option value="Single">Single</option>
+                            <option value="Married">Married</option>
+                            <option value="Divorced">Divorced</option>
+                            <option value="Widowed">Widowed</option>
+                            <option value="Separated">Separated</option>
+                        </select>
+                    </div>
+                    <div class="filter-col">
+                        <select id="regionFilter" onchange="filterUsers()">
+                            <option value="">All Regions</option>
+                            <option value="Dhaka">Dhaka</option>
+                            <option value="Chittagong">Chittagong</option>
+                            <option value="Khulna">Khulna</option>
+                            <option value="Barisal">Barisal</option>
+                            <option value="Sylhet">Sylhet</option>
+                            <option value="Rangpur">Rangpur</option>
+                            <option value="Mymensingh">Mymensingh</option>
+                        </select>
+                    </div>
+                    <div class="filter-col">
+                        <div class="city-filter-wrapper">
+                            <select id="cityFilter" onchange="filterUsers()">
+                                <option value="">All Cities</option>
+                            </select>
+                            <div class="city-search-wrapper">
+                                <input type="text" id="citySearch" placeholder="Search city..." onkeyup="filterCityDropdown()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-col">
+                        <select id="religionFilter" onchange="filterUsers()">
+                            <option value="">All Religions</option>
+                            <option value="Islam">Islam</option>
+                            <option value="Hinduism">Hinduism</option>
+                            <option value="Buddhism">Buddhism</option>
+                            <option value="Christianity">Christianity</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button class="clear-filters-btn" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="users-table-container">
+            <div class="table-header">
+                <h3><i class="bi bi-list-ul"></i> All Users</h3>
+                <span class="badge badge-primary" th:text="${users.size()} + ' users'">0 users</span>
+            </div>
+            <div class="table-responsive">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Rejection Reason</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr th:each="user : ${users}" 
+                            th:data-name="${user.fullName}" 
+                            th:data-email="${user.email}"
+                            th:data-role="${user.role}"
+                            th:data-status="${user.status}"
+                            th:data-gender="${user.gender}"
+                            th:data-region="${user.region}"
+                            th:data-city="${user.city}"
+                            th:data-religion="${user.religion}"
+                            th:data-marital="${user.maritalStatus}"
+                            th:data-age="${user.age}"
+                            th:data-rejection="${user.rejectionReason}">
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-avatar" th:text="${#strings.substring(user.fullName, 0, 1)}">U</div>
+                                    <div class="user-details">
+                                        <h4 th:text="${user.fullName}">User Name</h4>
+                                        <p th:text="${user.email}">user@example.com</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge" th:classappend="${user.role == 'ADMIN'} ? 'active' : (${user.role == 'USER'} ? '' : 'pending')" th:text="${user.role}">USER</span>
+                            </td>
+                            <td>
+                                <span class="status-badge" th:classappend="${user.status == 'APPROVED' || user.status == 'ACTIVE'} ? 'approved' : (${user.status == 'PENDING'} ? 'pending' : 'rejected')" th:text="${user.status}">ACTIVE</span>
+                            </td>
+                            <td>
+                                <span th:if="${user.status == 'REJECTED'}" th:text="${user.rejectionReason}" style="color: var(--danger); font-size: 0.8125rem;">Reason</span>
+                                <span th:unless="${user.status == 'REJECTED'}" style="color: var(--text-light);">-</span>
+                            </td>
+                            <td th:text="${#temporals.format(user.createdAt, 'MMM dd, yyyy')}">Jan 01, 2024</td>
+                            <td>
+                                <div class="action-btns" th:if="${user.status == 'PENDING'}">
+                                    <th:block th:if="${currentUser.role == 'VERIFICATION_ADMIN'}">
+                                        <button class="btn-action btn-approve" th:onclick="'approveUser(' + ${user.id} + ')'">
+                                            <i class="bi bi-check-lg"></i> Approve
+                                        </button>
+                                        <button class="btn-action btn-reject" th:onclick="'showRejectModal(' + ${user.id} + ')'">
+                                            <i class="bi bi-x-lg"></i> Reject
+                                        </button>
+                                    </th:block>
+                                    <span th:if="${currentUser.role != 'VERIFICATION_ADMIN'}" style="color: var(--text-light); font-size: 0.8125rem;">Awaiting Review</span>
+                                </div>
+                                <span th:unless="${user.status == 'PENDING'}" style="color: var(--text-light);">-</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${users.empty}">
+                            <td colspan="6" style="text-align: center; padding: 3rem;">
+                                <div class="empty-state">
+                                    <i class="bi bi-people"></i>
+                                    <p>No users found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-200);">
+                <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600; color: var(--dark);">
+                    <i class="bi bi-x-circle" style="color: var(--danger); margin-right: 0.5rem;"></i>Reject User
+                </h3>
+                <button onclick="closeRejectModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-light); line-height: 1;">&times;</button>
+            </div>
+            <form onsubmit="submitReject(event)" style="padding: 1.5rem;">
+                <input type="hidden" id="rejectUserId">
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--dark); font-size: 0.9375rem;">Reason (optional)</label>
+                    <textarea id="rejectReason" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 0.9375rem; resize: vertical; font-family: inherit;" placeholder="Enter reason for rejection"></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" onclick="closeRejectModal()" style="padding: 0.625rem 1.25rem; background: var(--gray-100); border: none; border-radius: var(--radius); color: var(--text); font-size: 0.875rem; font-weight: 500; cursor: pointer;">Cancel</button>
+                    <button type="submit" style="padding: 0.625rem 1.25rem; background: var(--danger); border: none; border-radius: var(--radius); color: var(--white); font-size: 0.875rem; font-weight: 500; cursor: pointer;">Reject User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="bi bi-check-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script th:inline="javascript">
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || '';
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+
+        function getHeaders() {
+            const headers = { 'Content-Type': 'application/json' };
+            const token = localStorage.getItem('token');
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            } else {
+                headers[csrfHeader] = csrfToken;
+            }
+            return headers;
+        }
+
+        function toggleProfileDropdown() {
+            document.getElementById('profileDropdown').classList.toggle('show');
+        }
+
+        document.addEventListener('click', function(e) {
+            var profileBtn = document.querySelector('.profile-btn');
+            var profileDropdown = document.getElementById('profileDropdown');
+            if (profileBtn && !profileBtn.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+
+        function filterUsers() {
+            const searchQuery = document.getElementById('userSearch').value.toLowerCase();
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const genderFilter = document.getElementById('genderFilter').value;
+            const regionFilter = document.getElementById('regionFilter').value;
+            const cityFilter = document.getElementById('cityFilter').value;
+            const religionFilter = document.getElementById('religionFilter').value;
+            const maritalFilter = document.getElementById('maritalStatusFilter').value;
+            const ageFilter = document.getElementById('ageFilter').value;
+            
+            document.querySelectorAll('#usersTableBody tr').forEach(row => {
+                const name = row.dataset.name || '';
+                const email = row.dataset.email || '';
+                const role = row.dataset.role || '';
+                const status = row.dataset.status || '';
+                const gender = row.dataset.gender || '';
+                const region = row.dataset.region || '';
+                const city = row.dataset.city || '';
+                const religion = row.dataset.religion || '';
+                const marital = row.dataset.marital || '';
+                const age = parseInt(row.dataset.age) || 0;
+                
+                const matchesSearch = name.toLowerCase().includes(searchQuery) || 
+                                      email.toLowerCase().includes(searchQuery) || 
+                                      region.toLowerCase().includes(searchQuery) || 
+                                      city.toLowerCase().includes(searchQuery);
+                const matchesRole = !roleFilter || role === roleFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesGender = !genderFilter || gender === genderFilter;
+                const matchesRegion = !regionFilter || region === regionFilter;
+                const matchesCity = !cityFilter || city === cityFilter;
+                const matchesReligion = !religionFilter || religion === religionFilter;
+                const matchesMarital = !maritalFilter || marital === maritalFilter;
+                
+                let matchesAge = true;
+                if (ageFilter) {
+                    if (ageFilter === '18-25') matchesAge = age >= 18 && age <= 25;
+                    else if (ageFilter === '26-35') matchesAge = age >= 26 && age <= 35;
+                    else if (ageFilter === '36-45') matchesAge = age >= 36 && age <= 45;
+                    else if (ageFilter === '46-55') matchesAge = age >= 46 && age <= 55;
+                    else if (ageFilter === '55+') matchesAge = age >= 55;
+                }
+                
+                row.style.display = (matchesSearch && matchesRole && matchesStatus && matchesGender && matchesRegion && matchesCity && matchesReligion && matchesMarital && matchesAge) ? '' : 'none';
+            });
+        }
+
+        function toggleFilterPanel() {
+            const panel = document.getElementById('filterPanel');
+            panel.classList.toggle('show');
+            if (panel.classList.contains('show')) {
+                populateAllCities();
+            }
+        }
+
+        var allCities = [];
+
+        function populateAllCities() {
+            if (allCities.length > 0) return;
+            
+            const cityData = {
+                'Dhaka': ['Dhaka', 'Gazipur', 'Narayanganj', 'Tangail', 'Manikganj', 'Munshiganj', 'Narsingdi', 'Faridpur', 'Gopalganj', 'Madaripur', 'Shariatpur', 'Rajbari', 'Kishoreganj', 'Netrakona', 'Mymensingh', 'Jamalpur', 'Sherpur'],
+                'Chittagong': ['Chittagong', 'Cox\'s Bazar', 'Bandarban', 'Rangamati', 'Khagrachari', 'Feni', 'Noakhali', 'Lakshmipur', 'Chandpur', 'Comilla', 'Brahmanbaria'],
+                'Khulna': ['Khulna', 'Jessore', 'Jhenaidah', 'Magura', 'Narail', 'Bagerhat', 'Satkhira', 'Pirojpur'],
+                'Barisal': ['Barisal', 'Bhola', 'Patuakhali', 'Barguna', 'Jhalokathi'],
+                'Sylhet': ['Sylhet', 'Moulvibazar', 'Habiganj', 'Sunamganj'],
+                'Rangpur': ['Rangpur', 'Dinajpur', 'Thakurgaon', 'Panchagarh', 'Nilphamari', 'Lalmonirhat', 'Gaibandha', 'Kurigram'],
+                'Mymensingh': ['Mymensingh', 'Jamalpur', 'Netrakona', 'Sherpur']
+            };
+            
+            for (var region in cityData) {
+                allCities = allCities.concat(cityData[region]);
+            }
+            allCities = [...new Set(allCities)].sort();
+            
+            const citySelect = document.getElementById('cityFilter');
+            citySelect.innerHTML = '<option value="">All Cities</option>';
+            allCities.forEach(function(city) {
+                var option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        }
+
+        function filterCityDropdown() {
+            const searchText = document.getElementById('citySearch').value.toLowerCase();
+            const citySelect = document.getElementById('cityFilter');
+            const currentValue = citySelect.value;
+            
+            citySelect.innerHTML = '<option value="">All Cities</option>';
+            
+            var filteredCities = allCities.filter(function(city) {
+                return city.toLowerCase().includes(searchText);
+            });
+            
+            filteredCities.forEach(function(city) {
+                var option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                if (city === currentValue) {
+                    option.selected = true;
+                }
+                citySelect.appendChild(option);
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('genderFilter').value = '';
+            document.getElementById('regionFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('religionFilter').value = '';
+            document.getElementById('maritalStatusFilter').value = '';
+            document.getElementById('ageFilter').value = '';
+            filterUsers();
+        }
+
+        function approveUser(userId) {
+            fetch(`/api/admin/users/${userId}/approve`, {
+                method: 'PUT',
+                headers: getHeaders()
+            })
+            .then(res => {
+                if (res.ok) {
+                    showToast('User approved successfully', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Failed to approve user', 'error');
+                }
+            })
+            .catch(err => {
+                showToast('Failed to approve user', 'error');
+            });
+        }
+
+        function showRejectModal(userId) {
+            document.getElementById('rejectUserId').value = userId;
+            document.getElementById('rejectModal').classList.add('show');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').classList.remove('show');
+            document.getElementById('rejectUserId').value = '';
+            document.getElementById('rejectReason').value = '';
+        }
+
+        function submitReject(e) {
+            e.preventDefault();
+            const userId = document.getElementById('rejectUserId').value;
+            const reason = document.getElementById('rejectReason').value;
+            
+            fetch(`/api/admin/users/${userId}/reject?reason=${encodeURIComponent(reason)}`, {
+                method: 'PUT',
+                headers: getHeaders()
+            })
+            .then(res => {
+                if (res.ok) {
+                    showToast('User rejected', 'success');
+                    closeRejectModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast('Failed to reject user', 'error');
+                }
+            })
+            .catch(err => {
+                showToast('Failed to reject user', 'error');
+            });
+        }
+
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            var toastMessage = document.getElementById('toastMessage');
+            var icon = toast.querySelector('i');
+            
+            toastMessage.textContent = message;
+            toast.className = 'toast toast-' + type;
+            
+            if (type === 'success') {
+                icon.className = 'bi bi-check-circle';
+            } else {
+                icon.className = 'bi bi-exclamation-circle';
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(function() {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        document.getElementById('rejectModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeRejectModal();
+            }
+        });
+    </script>
+</body>
+</html>
