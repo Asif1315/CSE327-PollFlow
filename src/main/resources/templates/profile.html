@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - PollFlow</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <a class="navbar-brand" href="/polls">
+                <i class="bi bi-lightning-charge-fill"></i> PollFlow
+            </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/polls">Home</a>
+                <a class="nav-link" href="/polls">Polls</a>
+                <div th:if="${isLoggedIn == true}">
+                    <div class="nav-item-wrapper">
+                        <button class="notification-btn" onclick="showNotifications()">
+                            <i class="bi bi-bell"></i>
+                            <span th:if="${unreadCount > 0}" class="notification-badge" th:text="${unreadCount}">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="notification-dropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="mark-all-btn" onclick="markAllAsRead()">Mark all as read</button>
+                            </div>
+                            <div id="notificationList" class="notification-list">
+                                <div class="notification-empty">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="nav-item-wrapper">
+                        <button class="profile-dropdown-btn">
+                            <i class="bi bi-person-circle"></i>
+                        </button>
+                        <div class="profile-dropdown">
+                            <div class="profile-dropdown-header">
+                                <i class="bi bi-person-circle" style="font-size: 2rem; color: #3b82f6;"></i>
+                                <div>
+                                    <div class="profile-name" th:text="${user?.fullName}">User</div>
+                                    <div class="profile-email" th:text="${user?.email}">email@example.com</div>
+                                </div>
+                            </div>
+                            <a href="/favourites" class="profile-dropdown-item">
+                                <i class="bi bi-heart"></i> Favourites
+                            </a>
+                            <a href="/profile" class="profile-dropdown-item active">
+                                <i class="bi bi-person"></i> Profile
+                            </a>
+                            <a href="/profile" class="profile-dropdown-item">
+                                <i class="bi bi-pencil"></i> Edit Profile
+                            </a>
+                            <div class="profile-dropdown-divider"></div>
+                            <a href="/logout" class="profile-dropdown-item logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div th:if="${isLoggedIn != true}">
+                    <a class="btn btn-primary" href="/login">Login</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="profile-page">
+        <div class="container">
+            <div class="profile-grid">
+                <aside class="profile-sidebar">
+                    <div class="profile-card">
+                        <div class="profile-avatar">
+                            <span th:text="${user?.fullName != null ? #strings.substring(user.fullName, 0, 1) : 'U'}">U</span>
+                        </div>
+                        <h3 class="profile-name" th:text="${user?.fullName ?: 'User'}">User Name</h3>
+                        <p class="profile-email" th:text="${user?.email ?: 'email@example.com'}">user@example.com</p>
+                        <span class="badge badge-primary" th:text="${user?.role ?: 'USER'}">USER</span>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <i class="bi bi-check-circle"></i>
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Votes Cast</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="bi bi-heart"></i>
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Favorites</span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="bi bi-bar-chart"></i>
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Polls Created</span>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="profile-main">
+                    <div class="profile-section">
+                        <div class="section-header">
+                            <h2><i class="bi bi-person"></i> Personal Information</h2>
+                            <button type="button" id="editModeBtn" class="btn btn-outline" onclick="toggleEditMode()">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        </div>
+                        <div class="profile-form-card">
+                            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+                            <div th:if="${success}" class="alert alert-success">Profile updated successfully!</div>
+                            
+                            <form th:action="@{/profile}" method="post" class="profile-form" id="profileForm">
+                                <div id="viewMode">
+                                    <div class="form-row">
+                                        <div class="view-field">
+                                            <label>Full Name</label>
+                                            <span th:text="${user?.fullName ?: '-'}">-</span>
+                                        </div>
+                                        <div class="view-field">
+                                            <label>Email Address</label>
+                                            <span th:text="${user?.email ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="view-field">
+                                            <label>Mobile Number</label>
+                                            <span th:text="${user?.mobile ?: '-'}">-</span>
+                                        </div>
+                                        <div class="view-field">
+                                            <label>Gender</label>
+                                            <span th:text="${user?.gender ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="view-field">
+                                            <label>Age</label>
+                                            <span th:text="${user?.age ?: '-'}">-</span>
+                                        </div>
+                                        <div class="view-field">
+                                            <label>Marital Status</label>
+                                            <span th:text="${user?.maritalStatus ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="view-field">
+                                            <label>Region</label>
+                                            <span th:text="${user?.region ?: '-'}">-</span>
+                                        </div>
+                                        <div class="view-field">
+                                            <label>City</label>
+                                            <span th:text="${user?.city ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="view-field">
+                                            <label>Postal Code</label>
+                                            <span th:text="${user?.postalCode ?: '-'}">-</span>
+                                        </div>
+                                        <div class="view-field">
+                                            <label>Religion</label>
+                                            <span th:text="${user?.religion ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="view-field full-width">
+                                            <label>Address</label>
+                                            <span th:text="${user?.address ?: '-'}">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="editMode" style="display: none;">
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <input type="text" id="fullName" name="fullName" th:value="${user?.fullName}" placeholder=" " required>
+                                            <label for="fullName">Full Name</label>
+                                            <i class="bi bi-person"></i>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <input type="email" id="email" name="email" th:value="${user?.email}" placeholder=" " disabled>
+                                            <label for="email">Email Address</label>
+                                            <i class="bi bi-envelope"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <input type="tel" id="mobile" name="mobile" th:value="${user?.mobile}" placeholder=" ">
+                                            <label for="mobile">Mobile Number</label>
+                                            <i class="bi bi-phone"></i>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <select id="gender" name="gender" class="form-select">
+                                                <option value="">Select Gender</option>
+                                                <option value="Male" th:selected="${user?.gender == 'Male'}">Male</option>
+                                                <option value="Female" th:selected="${user?.gender == 'Female'}">Female</option>
+                                                <option value="Other" th:selected="${user?.gender == 'Other'}">Other</option>
+                                            </select>
+                                            <i class="bi bi-gender-neuter"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <input type="number" id="age" name="age" th:value="${user?.age}" min="1" max="150" placeholder=" ">
+                                            <label for="age">Age</label>
+                                            <i class="bi bi-calendar"></i>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <select id="maritalStatus" name="maritalStatus" class="form-select">
+                                                <option value="">Select Marital Status</option>
+                                                <option value="Single" th:selected="${user?.maritalStatus == 'Single'}">Single</option>
+                                                <option value="Married" th:selected="${user?.maritalStatus == 'Married'}">Married</option>
+                                                <option value="Divorced" th:selected="${user?.maritalStatus == 'Divorced'}">Divorced</option>
+                                                <option value="Widowed" th:selected="${user?.maritalStatus == 'Widowed'}">Widowed</option>
+                                                <option value="Separated" th:selected="${user?.maritalStatus == 'Separated'}">Separated</option>
+                                            </select>
+                                            <i class="bi bi-heart"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <select id="region" name="region" class="form-select" onchange="updateCities()">
+                                                <option value="">Select Region</option>
+                                                <option value="Dhaka" th:selected="${user?.region == 'Dhaka'}">Dhaka</option>
+                                                <option value="Chittagong" th:selected="${user?.region == 'Chittagong'}">Chittagong</option>
+                                                <option value="Khulna" th:selected="${user?.region == 'Khulna'}">Khulna</option>
+                                                <option value="Barisal" th:selected="${user?.region == 'Barisal'}">Barisal</option>
+                                                <option value="Sylhet" th:selected="${user?.region == 'Sylhet'}">Sylhet</option>
+                                                <option value="Rangpur" th:selected="${user?.region == 'Rangpur'}">Rangpur</option>
+                                                <option value="Mymensingh" th:selected="${user?.region == 'Mymensingh'}">Mymensingh</option>
+                                            </select>
+                                            <i class="bi bi-map"></i>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <select id="city" name="city" class="form-select">
+                                                <option value="">Select City</option>
+                                            </select>
+                                            <i class="bi bi-building"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="hidden" id="currentCity" th:value="${user?.city}">
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group">
+                                            <input type="text" id="postalCode" name="postalCode" th:value="${user?.postalCode}" placeholder=" ">
+                                            <label for="postalCode">Postal Code</label>
+                                            <i class="bi bi-mailbox"></i>
+                                        </div>
+                                        
+                                        <div class="input-group">
+                                            <select id="religion" name="religion" class="form-select">
+                                                <option value="">Select Religion</option>
+                                                <option value="Islam" th:selected="${user?.religion == 'Islam'}">Islam</option>
+                                                <option value="Hinduism" th:selected="${user?.religion == 'Hinduism'}">Hinduism</option>
+                                                <option value="Buddhism" th:selected="${user?.religion == 'Buddhism'}">Buddhism</option>
+                                                <option value="Christianity" th:selected="${user?.religion == 'Christianity'}">Christianity</option>
+                                                <option value="Other" th:selected="${user?.religion == 'Other'}">Other</option>
+                                            </select>
+                                            <i class="bi bi-star"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="input-group full-width">
+                                            <textarea id="address" name="address" rows="2" th:text="${user?.address}" placeholder=" "></textarea>
+                                            <label for="address">Address</label>
+                                            <i class="bi bi-geo-alt"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-actions">
+                                        <button type="button" class="btn btn-secondary" onclick="toggleEditMode()">
+                                            <i class="bi bi-x-lg"></i> Cancel
+                                        </button>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check-lg"></i> Save Changes
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <div class="section-header">
+                            <h2><i class="bi bi-clock-history"></i> Recent Activity</h2>
+                        </div>
+                        <div class="activity-card">
+                            <div th:if="${#lists.isEmpty(recentVotes)}" class="empty-activity">
+                                <i class="bi bi-activity"></i>
+                                <p>No recent activity yet. Your poll votes and interactions will appear here.</p>
+                            </div>
+                            
+                            <div th:unless="${#lists.isEmpty(recentVotes)}" class="activity-section">
+                                <h3 class="activity-title"><i class="bi bi-check-circle"></i> Recent Votes</h3>
+                                <div class="activity-list">
+                                    <div th:each="vote : ${recentVotes}" class="activity-item">
+                                        <div class="activity-info">
+                                            <span class="activity-name" th:text="${vote.poll.title}">Poll Title</span>
+                                            <span class="activity-time" th:text="${#temporals.format(vote.votedAt, 'MMM dd, yyyy HH:mm')}">Date</span>
+                                        </div>
+                                        <span class="activity-badge voted">Voted</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 0;
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .navbar-brand i {
+            font-size: 1.75rem;
+        }
+
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .profile-page {
+            padding-top: 100px;
+            min-height: 100vh;
+            background: var(--background);
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            padding-bottom: 3rem;
+        }
+
+        .profile-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .profile-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .profile-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .profile-email {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .profile-stats {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .profile-stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .profile-stats .stat-item i {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+        }
+
+        .profile-stats .stat-value {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1rem;
+        }
+
+        .profile-stats .stat-label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+        }
+
+        .profile-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .profile-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .profile-form-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-row .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .view-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .view-field label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .view-field span {
+            font-size: 1rem;
+            color: var(--text);
+            padding: 0.5rem 0;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 2.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            color: var(--text);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+        }
+
+        .profile-form .input-group {
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        .profile-form .input-group.full-width {
+            grid-column: span 2;
+        }
+
+        .profile-form .input-group input,
+        .profile-form .input-group textarea,
+        .profile-form .input-group select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 2.75rem;
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            color: var(--text);
+            transition: var(--transition);
+        }
+
+        .profile-form .input-group input:focus,
+        .profile-form .input-group textarea:focus,
+        .profile-form .input-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background: var(--white);
+        }
+
+        .profile-form .input-group input:disabled {
+            background: var(--gray-100);
+            cursor: not-allowed;
+        }
+
+        .profile-form .input-group label {
+            position: absolute;
+            left: 2.75rem;
+            top: 1rem;
+            font-size: 0.9375rem;
+            color: var(--text-light);
+            pointer-events: none;
+            transition: var(--transition);
+            background: transparent;
+            padding: 0 0.25rem;
+        }
+
+        .profile-form .input-group input:focus + label,
+        .profile-form .input-group input:not(:placeholder-shown) + label,
+        .profile-form .input-group textarea:focus + label,
+        .profile-form .input-group textarea:not(:placeholder-shown) + label {
+            top: -0.5rem;
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: var(--white);
+        }
+
+        .profile-form .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 1rem;
+            color: var(--text-light);
+            font-size: 1.125rem;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .profile-form .input-group input:focus ~ i,
+        .profile-form .input-group textarea:focus ~ i,
+        .profile-form .input-group select:focus ~ i {
+            color: var(--primary);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--text);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            border: none;
+            color: var(--text);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .activity-card {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .empty-activity {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .empty-activity i {
+            font-size: 2.5rem;
+            color: var(--gray-300);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .empty-activity p {
+            color: var(--text-light);
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .activity-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .activity-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .activity-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+        }
+
+        .activity-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .activity-name {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .activity-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius);
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+
+        .activity-link {
+            font-size: 0.875rem;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .activity-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-row .full-width {
+                grid-column: 1;
+            }
+            .profile-sidebar {
+                order: -1;
+            }
+            .view-field.full-width {
+                grid-column: 1;
+            }
+        }
+
+        .notification-wrapper { position: relative; }
+        .nav-item-wrapper { position: relative; display: inline-block; }
+        .notification-btn { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #374151; position: relative; padding: 0.5rem; }
+        .notification-btn:hover { color: #3b82f6; }
+        .notification-badge { position: absolute; top: 0; right: 0; background: #ef4444; color: white; font-size: 0.625rem; padding: 0.125rem 0.375rem; border-radius: 10px; min-width: 18px; text-align: center; }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; width: 320px; max-height: 400px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #f3f4f6; }
+        .notification-header h4 { margin: 0; font-size: 0.875rem; font-weight: 600; }
+        .mark-all-btn { background: none; border: none; color: #3b82f6; font-size: 0.75rem; cursor: pointer; }
+        .notification-list { max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+        .notification-item:hover { background: #f9fafb; }
+        .notification-item.unread { background: #dbeafe; }
+        .notification-title { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .notification-message { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .notification-time { font-size: 0.625rem; color: #9ca3af; }
+        .notification-empty { padding: 2rem; text-align: center; color: #9ca3af; font-size: 0.875rem; }
+        .alert { padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .alert-error { background: #fee2e2; color: #dc2626; }
+        .alert-success { background: #dcfce7; color: #16a34a; }
+        
+        .profile-dropdown-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #374151; padding: 0.25rem; display: flex; align-items: center; }
+        .profile-dropdown-btn:hover { color: #3b82f6; }
+        .profile-dropdown { display: none; position: absolute; right: 0; top: 100%; background: white; border: 1px solid #e5e7eb; border-radius: 8px; width: 220px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000; }
+        .profile-dropdown.show { display: block; }
+        .profile-dropdown-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-bottom: 1px solid #f3f4f6; }
+        .profile-dropdown-header .profile-name { font-weight: 600; font-size: 0.875rem; }
+        .profile-dropdown-header .profile-email { font-size: 0.75rem; color: #6b7280; }
+        .profile-dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #374151; text-decoration: none; font-size: 0.875rem; }
+        .profile-dropdown-item:hover { background: #f9fafb; }
+        .profile-dropdown-item.active { background: #dbeafe; color: #3b82f6; font-weight: 500; }
+        .profile-dropdown-item.logout { color: #ef4444; }
+        .profile-dropdown-divider { height: 1px; background: #f3f4f6; margin: 0.25rem 0; }
+        .nav-link.active { color: #3b82f6; font-weight: 600; }
+    </style>
+    
+    <script th:if="${isLoggedIn == true}">
+        var cityData = {
+            'Dhaka': ['Dhaka', 'Gazipur', 'Narayanganj', 'Tangail', 'Manikganj', 'Munshiganj', 'Narsingdi', 'Faridpur', 'Gopalganj', 'Madaripur', 'Shariatpur', 'Rajbari', 'Kishoreganj', 'Netrakona', 'Mymensingh', 'Jamalpur', 'Sherpur'],
+            'Chittagong': ['Chittagong', 'Cox\'s Bazar', 'Bandarban', 'Rangamati', 'Khagrachari', 'Feni', 'Noakhali', 'Lakshmipur', 'Chandpur', 'Comilla', 'Brahmanbaria'],
+            'Khulna': ['Khulna', 'Jessore', 'Jhenaidah', 'Magura', 'Narail', 'Bagerhat', 'Satkhira', 'Pirojpur'],
+            'Barisal': ['Barisal', 'Bhola', 'Patuakhali', 'Barguna', 'Jhalokathi'],
+            'Sylhet': ['Sylhet', 'Moulvibazar', 'Habiganj', 'Sunamganj'],
+            'Rangpur': ['Rangpur', 'Dinajpur', 'Thakurgaon', 'Panchagarh', 'Nilphamari', 'Lalmonirhat', 'Gaibandha', 'Kurigram'],
+            'Mymensingh': ['Mymensingh', 'Jamalpur', 'Netrakona', 'Sherpur']
+        };
+
+        function toggleEditMode() {
+            var viewMode = document.getElementById('viewMode');
+            var editMode = document.getElementById('editMode');
+            var editBtn = document.getElementById('editModeBtn');
+            
+            if (viewMode.style.display === 'none') {
+                viewMode.style.display = 'block';
+                editMode.style.display = 'none';
+                editBtn.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+            } else {
+                viewMode.style.display = 'none';
+                editMode.style.display = 'block';
+                editBtn.innerHTML = '<i class="bi bi-eye"></i> View';
+                updateCities();
+            }
+        }
+
+        function updateCities() {
+            var regionSelect = document.getElementById('region');
+            var citySelect = document.getElementById('city');
+            var selectedRegion = regionSelect.value;
+            var currentCity = document.getElementById('currentCity').value;
+            
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            
+            if (selectedRegion && cityData[selectedRegion]) {
+                cityData[selectedRegion].forEach(function(city) {
+                    var option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    if (city === currentCity) {
+                        option.selected = true;
+                    }
+                    citySelect.appendChild(option);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var currentCity = document.getElementById('currentCity').value;
+            if (currentCity && currentCity !== '') {
+                var regionSelect = document.getElementById('region');
+                var selectedRegion = regionSelect.value;
+                if (selectedRegion && cityData[selectedRegion]) {
+                    var citySelect = document.getElementById('city');
+                    citySelect.innerHTML = '<option value="">Select City</option>';
+                    cityData[selectedRegion].forEach(function(city) {
+                        var option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        if (city === currentCity) {
+                            option.selected = true;
+                        }
+                        citySelect.appendChild(option);
+                    });
+                }
+            }
+        });
+
+        function showNotifications() {
+            document.getElementById('notificationDropdown').classList.toggle('show');
+            loadNotifications();
+        }
+        
+        function loadNotifications() {
+            var list = document.getElementById('notificationList');
+            fetch('/api/notifications/unread?page=0&size=10')
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                var content = '';
+                if (data.content && data.content.length > 0) {
+                    data.content.forEach(function(n) {
+                        content += '<div class="notification-item' + (n.isRead ? '' : ' unread') + '" onclick="markAsRead(' + n.id + ')">' +
+                            '<div class="notification-title">' + n.title + '</div>' +
+                            '<div class="notification-message">' + n.message + '</div>' +
+                            '<div class="notification-time">' + new Date(n.createdAt).toLocaleString() + '</div>' +
+                            '</div>';
+                    });
+                } else {
+                    content = '<div class="notification-empty">No new notifications</div>';
+                }
+                list.innerHTML = content;
+            });
+        }
+        
+        function markAsRead(id) {
+            fetch('/api/notifications/' + id + '/read', { method: 'PUT' })
+            .then(function() { location.reload(); });
+        }
+        
+        function markAllAsRead() {
+            fetch('/api/notifications/read-all', { method: 'PUT' })
+            .then(function() { location.reload(); });
+        }
+        
+        document.addEventListener('click', function(e) {
+            var notificationDropdown = document.getElementById('notificationDropdown');
+            var notificationWrapper = document.querySelector('.nav-item-wrapper:first-child');
+            if (notificationWrapper && !notificationWrapper.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+            }
+            
+            var profileDropdown = document.querySelector('.profile-dropdown');
+            var profileWrapper = document.querySelector('.nav-item-wrapper:nth-child(2)');
+            if (profileWrapper && !profileWrapper.contains(e.target)) {
+                profileDropdown.classList.remove('show');
+            }
+        });
+        
+        document.querySelector('.profile-dropdown-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.querySelector('.profile-dropdown').classList.toggle('show');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PollFlow</title>
+    <link rel="stylesheet" th:href="@{/css/global.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="auth-page">
+        <div class="auth-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        
+        <a href="/" class="auth-logo">
+            <i class="bi bi-lightning-charge-fill"></i> PollFlow
+        </a>
+        
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Welcome Back</h1>
+                <p>Sign in to continue to PollFlow</p>
+            </div>
+            
+            <form action="/login" method="post" class="auth-form">
+                <input type="hidden" name="redirect" th:value="${redirectUrl}">
+                <div class="input-group">
+                    <input type="email" id="email" name="email" placeholder=" " required>
+                    <label for="email">Email Address</label>
+                    <i class="bi bi-envelope"></i>
+                </div>
+                
+                <div class="input-group password-input-wrapper">
+                    <input type="password" id="password" name="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="bi bi-eye" id="passwordIcon"></i>
+                    </button>
+                </div>
+                
+                <div th:if="${param.error}" class="error-message">
+                    <i class="bi bi-exclamation-circle"></i> 
+                    <span th:text="${error != null ? error : 'Invalid email or password'}">Invalid email or password</span>
+                </div>
+                
+                <div th:if="${param.registered}" class="success-message">
+                    <i class="bi bi-check-circle"></i> Registration successful! Please login with your credentials.
+                </div>
+                
+                <div th:if="${param.logout}" class="success-message">
+                    <i class="bi bi-check-circle"></i> You have been logged out successfully.
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    <i class="bi bi-box-arrow-in-right"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Create one</a></p>
+            </div>
+            
+            <div class="demo-accounts">
+                <h4><i class="bi bi-person-badge"></i> Demo Accounts</h4>
+                <div class="demo-item">
+                    <span class="demo-role">Poll Admin</span>
+                    <span class="demo-email">polladmin@pollflow.com</span>
+                </div>
+                <div class="demo-item">
+                    <span class="demo-role">Verification Admin</span>
+                    <span class="demo-email">verification@pollflow.com</span>
+                </div>
+                <span class="demo-password">Password: admin123</span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f8fafc 100%);
+        }
+
+        .auth-shapes {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .auth-shapes .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+        }
+
+        .shape-1 {
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            top: -200px;
+            left: -200px;
+        }
+
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: var(--secondary);
+            bottom: -150px;
+            right: -150px;
+        }
+
+        .shape-3 {
+            width: 300px;
+            height: 300px;
+            background: var(--accent);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .auth-logo {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            z-index: 10;
+        }
+
+        .auth-logo i {
+            font-size: 1.75rem;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: var(--radius-xl);
+            padding: 2.5rem;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            position: relative;
+            z-index: 5;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-header p {
+            color: var(--text-light);
+            font-size: 0.9375rem;
+        }
+
+        .auth-form .input-group {
+            position: relative;
+        }
+
+        .auth-form .input-group input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 2.75rem;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            color: var(--text);
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+
+        .auth-form .input-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            background: var(--white);
+        }
+
+        .auth-form .input-group label {
+            position: absolute;
+            left: 2.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9375rem;
+            color: var(--text-light);
+            pointer-events: none;
+            transition: var(--transition);
+            background: transparent;
+            padding: 0 0.25rem;
+        }
+
+        .auth-form .input-group input:focus + label,
+        .auth-form .input-group input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: var(--white);
+        }
+
+        .auth-form .input-group > i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+            font-size: 1.125rem;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .auth-form .input-group input:focus ~ i {
+            color: var(--primary);
+        }
+
+        .auth-form .btn {
+            margin-top: 1rem;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .auth-footer a {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .demo-accounts {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .demo-accounts h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .demo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .demo-role {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .demo-email {
+            font-size: 0.8125rem;
+            color: var(--text-light);
+            font-family: monospace;
+        }
+
+        .demo-password {
+            display: block;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+            font-family: monospace;
+        }
+
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 1.5rem;
+            }
+            
+            .auth-logo {
+                top: 1rem;
+                left: 1rem;
+            }
+        }
+
+        .error-message {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius);
+            color: var(--danger);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .success-message {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: var(--radius);
+            color: var(--success);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        .password-input-wrapper {
+            position: relative;
+        }
+
+        .auth-form .password-input-wrapper input {
+            padding-right: 3rem;
+            padding-left: 2.75rem;
+            box-sizing: border-box;
+        }
+
+        .auth-form .password-input-wrapper label {
+            left: 2.75rem !important;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0.25rem;
+            font-size: 1.125rem;
+            transition: color 0.3s;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+    </style>
+
+    <script>
+        function togglePassword() {
+            var passwordInput = document.getElementById('password');
+            var passwordIcon = document.getElementById('passwordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('bi-eye');
+                passwordIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('bi-eye-slash');
+                passwordIcon.classList.add('bi-eye');
+            }
+        }
+    </script>
+</body>
+</html>
