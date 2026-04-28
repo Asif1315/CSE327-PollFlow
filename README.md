@@ -190,3 +190,33 @@
 10. Environment
 11. Education
 12. Lifestyle
+
+## Unit Testing
+
+Unit testing was performed on the `SingleVoteStrategy` module of the PollFlow project.
+
+### Tested Module
+`src/main/java/com/pollflow/strategy/SingleVoteStrategy.java`
+
+### Test File
+`src/test/java/com/pollflow/strategy/SingleVoteStrategyTest.java`
+
+### Testing Framework
+- JUnit 5
+- Mockito
+
+### Purpose of Testing
+The purpose of this unit test is to verify the core voting rule of the system: a user should be able to vote only once in a poll.
+
+### Test Cases
+1. `canVote_ShouldReturnTrue_WhenUserHasNotVotedBefore`  
+   Checks that a user can vote if they have not voted before.
+
+2. `canVote_ShouldReturnFalse_WhenUserHasAlreadyVoted`  
+   Checks that a user cannot vote again if they have already voted.
+
+3. `applyVotingRules_ShouldReturnSamePollDTO`  
+   Checks that the voting rule method returns the same `PollDTO` object.
+
+### Test Result
+All 3 unit test cases passed successfully.
